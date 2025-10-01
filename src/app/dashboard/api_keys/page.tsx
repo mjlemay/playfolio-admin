@@ -2,11 +2,40 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Club } from '../../lib/types';
 
 export default function ApiKeys() {
   const router = useRouter();
-  const [newKeyName, setNewKeyName] = useState('');
-  const [apiKeys, setApiKeys] = useState<{ id: string; name: string; key: string; created: string }[]>([]);
+  const [selectedClub, setSelectedClub] = useState('');
+  const [apiKeys, setApiKeys] = useState<{ id: string; name: string; key: string; created: string; clubUid: string }[]>([]);
+  
+  // Sample clubs data - in a real app, this would come from an API or shared state
+  const [clubs] = useState<Club[]>([
+    {
+      uid: 'club_1727734567890_abc12',
+      prefix: 'ABC',
+      meta: null,
+      status: 'present',
+      created_at: '2024-09-30T10:00:00Z',
+      updated_at: null,
+    },
+    {
+      uid: 'club_1727734567891_def34',
+      prefix: 'DEF',
+      meta: null,
+      status: 'present',
+      created_at: '2024-09-30T11:00:00Z',
+      updated_at: null,
+    },
+    {
+      uid: 'club_1727734567892_ghi56',
+      prefix: 'GHI',
+      meta: null,
+      status: 'unknown',
+      created_at: '2024-09-30T12:00:00Z',
+      updated_at: null,
+    }
+  ]);
 
   const handleBack = () => {
     router.push('/dashboard');
@@ -18,17 +47,21 @@ export default function ApiKeys() {
   };
 
   const generateApiKey = () => {
-    if (!newKeyName.trim()) return;
+    if (!selectedClub.trim()) return;
+
+    const selectedClubData = clubs.find(club => club.uid === selectedClub);
+    const keyName = selectedClubData ? `${selectedClubData.prefix} - API Key` : 'API Key';
 
     const newKey = {
       id: Date.now().toString(),
-      name: newKeyName,
+      name: keyName,
       key: `pk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-      created: new Date().toLocaleDateString()
+      created: new Date().toLocaleDateString(),
+      clubUid: selectedClub
     };
 
     setApiKeys([...apiKeys, newKey]);
-    setNewKeyName('');
+    // Keep the selected club in the form after generating the key
   };
 
   const deleteApiKey = (id: string) => {
@@ -39,6 +72,11 @@ export default function ApiKeys() {
     navigator.clipboard.writeText(text);
     // You could add a toast notification here
   };
+
+  // Filter API keys based on selected club
+  const filteredApiKeys = selectedClub 
+    ? apiKeys.filter(key => key.clubUid === selectedClub)
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -80,23 +118,28 @@ export default function ApiKeys() {
               <div className="space-y-4">
                 <div className="flex space-x-4">
                   <div className="flex-1">
-                    <label htmlFor="key-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      API Key Name
+                    <label htmlFor="club-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Select Club
                     </label>
-                    <input
-                      type="text"
-                      id="key-name"
-                      value={newKeyName}
-                      onChange={(e) => setNewKeyName(e.target.value)}
+                    <select
+                      id="club-select"
+                      value={selectedClub}
+                      onChange={(e) => setSelectedClub(e.target.value)}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
-                      placeholder="e.g., Mobile App Integration"
-                    />
+                    >
+                      <option value="">Select a club...</option>
+                      {clubs.map((club) => (
+                        <option key={club.uid} value={club.uid}>
+                          {club.prefix} - {club.uid}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex-shrink-0 flex items-end">
                     <button
                       onClick={generateApiKey}
-                      disabled={!newKeyName.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                      disabled={!selectedClub.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
                     >
                       Generate Key
                     </button>
@@ -108,46 +151,87 @@ export default function ApiKeys() {
               <div className="mt-8">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                   Active API Keys
+                  {selectedClub && (
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+                      for {clubs.find(club => club.uid === selectedClub)?.prefix}
+                    </span>
+                  )}
                 </h3>
-                {apiKeys.length === 0 ? (
+                {!selectedClub ? (
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                     <p className="text-gray-600 dark:text-gray-400 text-center">
-                      No API keys generated yet. Create your first API key above.
+                      Select a club above to view and manage its API keys.
+                    </p>
+                  </div>
+                ) : filteredApiKeys.length === 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">
+                      No API keys generated for this club yet. Create your first API key above.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {apiKeys.map((apiKey) => (
-                      <div key={apiKey.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            API Key
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Created
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {filteredApiKeys.map((apiKey) => (
+                          <tr key={apiKey.id} className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                               {apiKey.name}
-                            </h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Created: {apiKey.created}
-                            </p>
-                            <div className="mt-2 flex items-center space-x-2">
-                              <code className="text-xs bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded font-mono text-gray-800 dark:text-gray-200">
-                                {apiKey.key}
-                              </code>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={apiKey.key}
+                                  readOnly
+                                  className="text-xs bg-gray-50 dark:bg-gray-600 border border-gray-200 dark:border-gray-500 px-2 py-1 rounded font-mono text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-text select-all w-full"
+                                  onClick={(e) => e.currentTarget.select()}
+                                />
+                                <button
+                                  onClick={() => copyToClipboard(apiKey.key)}
+                                  className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex-shrink-0"
+                                  title="Copy API key to clipboard"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {apiKey.created}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
                               <button
-                                onClick={() => copyToClipboard(apiKey.key)}
-                                className="text-blue-600 hover:text-blue-800 text-xs"
+                                onClick={() => deleteApiKey(apiKey.id)}
+                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                                title="Delete API key"
                               >
-                                Copy
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                               </button>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => deleteApiKey(apiKey.id)}
-                            className="text-red-600 hover:text-red-800 text-sm"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
