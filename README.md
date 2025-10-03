@@ -1,7 +1,10 @@
-This is an admin panel to help manage your playfolio apis. 
+# Playfolio Admin
 
-## Invironment Vars
-```
+This is an admin panel to help manage your playfolio apis.
+
+## Environment Vars
+
+```bash
 ADMIN_USERNAME=admin //panel login
 ADMIN_PASSWORD=admin123 //panel password
 ```
@@ -21,4 +24,3 @@ bun dev
 ```
 
 Open [http://localhost:4400](http://localhost:4400) with your browser to see the result.
-
