@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Make request to get all clubs
-    const response = await fetch(`${apiUrl}/clubs`, {
+    const response = await fetch(`${apiUrl}/api/clubs`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
