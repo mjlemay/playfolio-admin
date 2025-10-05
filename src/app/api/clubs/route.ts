@@ -27,12 +27,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const clubs = await response.json();
+    const apiResponse = await response.json();
+
+    // Extract clubs from the data array in the API response
+    const clubs = apiResponse.data || [];
 
     return NextResponse.json(
       { 
         clubs,
-        success: true 
+        success: true,
+        count: apiResponse.count || clubs.length
       },
       { status: 200 }
     );
