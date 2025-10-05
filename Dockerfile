@@ -6,11 +6,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 
-# Install dependencies
+# Install dependencies with platform-specific handling
 RUN \
-  if [ -f package-lock.json ]; then npm ci; \
+  if [ -f package-lock.json ]; then rm package-lock.json && npm install; \
   elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install; \
-  elif [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
+  elif [ -f yarn.lock ]; then yarn install; \
   else npm install; \
   fi
 
