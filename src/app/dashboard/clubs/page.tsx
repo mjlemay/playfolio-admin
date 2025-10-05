@@ -1,12 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Club, AttendanceStatus } from '../../lib/types';
 
 export default function Clubs() {
   const router = useRouter();
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     prefix: '',
     status: 'unknown' as AttendanceStatus
@@ -30,6 +32,37 @@ export default function Clubs() {
     formData: { prefix: '', status: 'unknown' }
   });
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
+
+  // Fetch clubs on component mount
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/clubs');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clubs: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.clubs) {
+          setClubs(data.clubs);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        console.error('Error fetching clubs:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch clubs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClubs();
+  }, []);
 
   const handleBack = () => {
     router.push('/dashboard');
@@ -245,10 +278,23 @@ export default function Clubs() {
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                   Existing Clubs
                 </h3>
-                {clubs.length === 0 ? (
+                
+                {loading ? (
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                     <p className="text-gray-600 dark:text-gray-400 text-center">
-                      No clubs created yet. Create your first club above.
+                      Loading clubs...
+                    </p>
+                  </div>
+                ) : error ? (
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                    <p className="text-red-600 dark:text-red-400 text-center">
+                      Error: {error}
+                    </p>
+                  </div>
+                ) : clubs.length === 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p className="text-gray-600 dark:text-gray-400 text-center">
+                      No clubs found. Create your first club above.
                     </p>
                   </div>
                 ) : (
