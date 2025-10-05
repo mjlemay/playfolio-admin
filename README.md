@@ -7,6 +7,7 @@ This is an admin panel to help manage your playfolio apis.
 ```bash
 ADMIN_USERNAME=admin //panel login
 ADMIN_PASSWORD=admin123 //panel password
+PLAYFOLIO_ADMIN_KEY=secretkeyphrase // key should match playfolio env. var
 ```
 
 ## Getting Started
