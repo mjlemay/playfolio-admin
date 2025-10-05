@@ -4,15 +4,11 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+COPY package.json ./
 
-# Install dependencies with platform-specific handling
-RUN \
-  if [ -f package-lock.json ]; then rm package-lock.json && npm install; \
-  elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm install; \
-  elif [ -f yarn.lock ]; then yarn install; \
-  else npm install; \
-  fi
+# Install dependencies (including dev dependencies for development)
+# Fresh install ensures Linux-compatible binaries
+RUN npm install
 
 # Copy source code
 COPY . .
