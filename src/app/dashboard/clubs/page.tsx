@@ -320,7 +320,7 @@ export default function Clubs() {
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        {clubs.map((club, index) => (
+                        {clubs && clubs.map((club, index) => (
                           <tr key={index} className="hover:bg-blue-50 dark:hover:bg-blue-900/20">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                               {club.prefix}
