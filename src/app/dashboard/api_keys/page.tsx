@@ -1,41 +1,47 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Club } from '../../lib/types';
 
 export default function ApiKeys() {
   const router = useRouter();
   const [selectedClub, setSelectedClub] = useState('');
   const [apiKeys, setApiKeys] = useState<{ id: string; name: string; key: string; created: string; clubUid: string }[]>([]);
-  
-  // Sample clubs data - in a real app, this would come from an API or shared state
-  const [clubs] = useState<Club[]>([
-    {
-      uid: 'club_1727734567890_abc12',
-      prefix: 'ABC',
-      meta: null,
-      status: 'present',
-      created_at: '2024-09-30T10:00:00Z',
-      updated_at: null,
-    },
-    {
-      uid: 'club_1727734567891_def34',
-      prefix: 'DEF',
-      meta: null,
-      status: 'present',
-      created_at: '2024-09-30T11:00:00Z',
-      updated_at: null,
-    },
-    {
-      uid: 'club_1727734567892_ghi56',
-      prefix: 'GHI',
-      meta: null,
-      status: 'unknown',
-      created_at: '2024-09-30T12:00:00Z',
-      updated_at: null,
-    }
-  ]);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch clubs from the same API endpoint as the clubs page
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/clubs');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch clubs: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.clubs) {
+          setClubs(data.clubs);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        console.error('Error fetching clubs:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch clubs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClubs();
+  }, []);
 
   const handleBack = () => {
     router.push('/dashboard');
@@ -50,7 +56,7 @@ export default function ApiKeys() {
     if (!selectedClub.trim()) return;
 
     const selectedClubData = clubs.find(club => club.uid === selectedClub);
-    const keyName = selectedClubData ? `${selectedClubData.prefix} - API Key` : 'API Key';
+    const keyName = selectedClubData ? `${selectedClubData.displayName} - API Key` : 'API Key';
 
     const newKey = {
       id: Date.now().toString(),
@@ -125,12 +131,15 @@ export default function ApiKeys() {
                       id="club-select"
                       value={selectedClub}
                       onChange={(e) => setSelectedClub(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm"
+                      disabled={loading}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm disabled:opacity-50"
                     >
-                      <option value="">Select a club...</option>
-                      {clubs.map((club) => (
+                      <option value="">
+                        {loading ? 'Loading clubs...' : error ? 'Error loading clubs' : 'Select a club...'}
+                      </option>
+                      {!loading && !error && clubs.map((club) => (
                         <option key={club.uid} value={club.uid}>
-                          {club.prefix} - {club.uid}
+                          {club.displayName} - {club.uid}
                         </option>
                       ))}
                     </select>
@@ -153,7 +162,7 @@ export default function ApiKeys() {
                   Active API Keys
                   {selectedClub && (
                     <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                      for {clubs.find(club => club.uid === selectedClub)?.prefix}
+                      for {clubs.find(club => club.uid === selectedClub)?.displayName}
                     </span>
                   )}
                 </h3>
