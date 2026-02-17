@@ -48,3 +48,42 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const apiUrl = process.env.PLAYFOLIO_API_URL;
+    const adminKey = process.env.PLAYFOLIO_ADMIN_KEY;
+
+    if (!apiUrl) {
+      return NextResponse.json({ error: 'PLAYFOLIO_API_URL environment variable is not set' }, { status: 500 });
+    }
+    if (!adminKey) {
+      return NextResponse.json({ error: 'PLAYFOLIO_ADMIN_KEY environment variable is not set' }, { status: 500 });
+    }
+
+    const body = await request.json();
+
+    const response = await fetch(`${apiUrl}/api/clubs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errBody.error || `Failed to create club: ${response.statusText}` },
+        { status: response.status }
+      );
+    }
+
+    const apiResponse = await response.json();
+    return NextResponse.json(apiResponse, { status: 201 });
+  } catch (error) {
+    console.error('Clubs POST error:', error);
+    return NextResponse.json({ error: 'Failed to create club' }, { status: 500 });
+  }
+}
