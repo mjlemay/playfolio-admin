@@ -1,10 +1,33 @@
 export type AttendanceStatus = 'present' | 'absent' | 'banned' | 'unknown' | 'inactive';
 
 export type ClubMember = {
-  player: { uid: string; meta: Record<string,string> | null; pin: string | null; status: string | null; created_at: string; updated_at: string | null; };
+  player: { uid: string; meta: Record<string,string> | null; status: string | null; created_at: string; updated_at: string | null; };
   role: string;
   joined_date: string;
   status: string;
+}
+
+export type Player = {
+  uid: string;
+  meta: Record<string,string> | null;
+  status: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export type KeychainMember = {
+  player_uid: string;
+  joined_at: string;
+  meta: Record<string,string> | null;
+  status: string | null;
+}
+
+export type Keychain = {
+  uid: string;
+  auth_code: string;
+  created_at: string;
+  updated_at: string | null;
+  players: KeychainMember[];
 }
 
 export type Device = {
@@ -17,7 +40,7 @@ export type Device = {
 
 export type ClubKey = {
   key: string;
-  player_uid: string;
+  keychain_id: string;
   originating_club_id: string;
   status: string;
   meta: Record<string,string> | null;

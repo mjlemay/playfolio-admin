@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const response = await fetch(`${apiUrl}/api/clubs/${uid}/keys`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player_uid: body.player_uid }),
+      body: JSON.stringify({ auth_code: body.auth_code }),
     });
 
     if (!response.ok) {
